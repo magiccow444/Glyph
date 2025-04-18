@@ -10,11 +10,11 @@ from tqdm import tqdm
 # 1. Configuration
 # --------------------------
 BATCH_SIZE = 32
-EPOCHS = 10
-LR = 1e-4
+EPOCHS = 20
+LR = 0.0001
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DATA_DIR = "./dataset"
-MODEL_PATH = "best_efficientnet.pth"
+DATA_DIR = "D:/Github/Programming-Sign-Language-PSL-/asl_dataset"
+MODEL_PATH = "D:/Github/Programming-Sign-Language-PSL-/best_model.pth"
 
 # --------------------------
 # 2. Transforms
