@@ -26,7 +26,7 @@ while True:
     # Draw hand landmarks
     if result.multi_hand_landmarks:
         for hand_landmarks in result.multi_hand_landmarks:
-            for id, landmark in enumerate(hand_landmarks.landmark):
+            for landmark in enumerate(hand_landmarks.landmark):
                 gesture = None
 
                 # Get relevant y-values
@@ -39,6 +39,7 @@ while True:
 
                 if (thumb_y > wrist_y and index_y > wrist_y and pinky_y < wrist_y): gesture = "Thumbs Up!"
                 elif (thumb_y < wrist_y and index_y < wrist_y and pinky_y > wrist_y): gesture = "Thumbs Down!"
+                elif (thumb_y > wrist_y and index_y > thumb_y and middle_y > index_y): gesture = "Open Hand"
 
                 if gesture:
                     cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
