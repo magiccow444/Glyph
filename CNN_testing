@@ -1,0 +1,53 @@
+import cv2
+import torch
+from torchvision import transforms
+import timm
+from PIL import Image
+import numpy as np
+
+# Load the pre-trained or fine-tuned model
+model = timm.create_model('efficientnet_b3', pretrained=False, num_classes=36)
+model.load_state_dict(torch.load('D:/Github/Programming-Sign-Language-PSL-/models/best_model1-LR=0.0001-ACC=0.984.pth'))  # Load the trained model weights
+model.eval()
+
+# Preprocessing function (for live image frames)
+transform = transforms.Compose([
+    transforms.ToPILImage(),  # Convert OpenCV image to PIL
+    transforms.Resize((400, 400)),  # Resize to the same size as the training images
+    transforms.ToTensor(),  # Convert to tensor
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize based on ImageNet statistics
+])
+
+# Initialize webcam
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()  # Read a frame from the webcam
+    if not ret:
+        break
+
+    # Resize the frame to 400x400 for consistent input size
+    frame_resized = cv2.resize(frame, (400, 400))
+
+    # Preprocess the image (same as in training)
+    input_tensor = transform(frame_resized)
+    input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
+
+    # Predict using the model
+    with torch.no_grad():
+        output = model(input_tensor)
+        _, predicted_class = torch.max(output, 1)
+
+    # Display the result (you can display the predicted class here)
+    cv2.putText(frame, f"Predicted Class: {predicted_class.item()}", (50, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+    # Show the frame with prediction
+    cv2.imshow('Live Hand Sign Detection', frame)
+
+    # Break the loop if 'ESC' is pressed
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC key to exit
+        break
+
+cap.release()
+cv2.destroyAllWindows()

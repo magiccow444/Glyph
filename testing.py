@@ -30,18 +30,15 @@ while True:
                 gesture = None
 
                 # Get relevant y-values
-                thumb_y = hand_landmarks.landmark[4].y
-                wrist_y = hand_landmarks.landmark[0].y
-                index_y = hand_landmarks.landmark[8].y
-                middle_y = hand_landmarks.landmark[12].y
-                ring_y = hand_landmarks.landmark[16].y
-                pinky_y = hand_landmarks.landmark[20].y
+                thumb_y = -hand_landmarks.landmark[4].y
+                wrist_y = -hand_landmarks.landmark[0].y
+                index_y = -hand_landmarks.landmark[8].y
+                middle_y = -hand_landmarks.landmark[12].y
+                ring_y = -hand_landmarks.landmark[16].y
+                pinky_y = -hand_landmarks.landmark[20].y
 
-                # Thumbs up condition
-                if (thumb_y < wrist_y and  # Thumb is above wrist
-                    index_y < wrist_y and
-                    pinky_y > wrist_y):
-                    gesture = "Thumbs Up!"
+                if (thumb_y > wrist_y and index_y > wrist_y and pinky_y < wrist_y): gesture = "Thumbs Up!"
+                elif (thumb_y < wrist_y and index_y < wrist_y and pinky_y > wrist_y): gesture = "Thumbs Down!"
 
                 if gesture:
                     cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)

@@ -1,24 +1,17 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+import torch.optim as optim
+from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 from timm import create_model
 import os
-from tqdm import tqdm
 
-# --------------------------
-# 1. Configuration
-# --------------------------
-BATCH_SIZE = 32
-EPOCHS = 20
+# --- Constants ---
+BEST_MODEL_PATH = 'D:/Github/Programming-Sign-Language-PSL-/models/best_model2-LR=0.0001-BAT=32.pth'
+EPOCHS = 10
 LR = 0.0001
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DATA_DIR = "D:/Github/Programming-Sign-Language-PSL-/asl_dataset"
-MODEL_PATH = "D:/Github/Programming-Sign-Language-PSL-/best_model.pth"
 
-# --------------------------
-# 2. Transforms
-# --------------------------
+# --- Transforms ---
 transform = transforms.Compose([
     transforms.Resize((400, 400)),
     transforms.RandomHorizontalFlip(),
@@ -28,85 +21,91 @@ transform = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# --------------------------
-# 3. Dataset & Dataloaders
-# --------------------------
-train_dataset = datasets.ImageFolder(os.path.join(DATA_DIR, "train"), transform=transform)
-val_dataset = datasets.ImageFolder(os.path.join(DATA_DIR, "val"), transform=transform)
-test_dataset = datasets.ImageFolder(os.path.join(DATA_DIR, "test"), transform=transform)
+# --- Dataset & Splits ---
+dataset = datasets.ImageFolder(root='D:/Github/Programming-Sign-Language-PSL-/asl_dataset', transform=transform)
+class_names = dataset.classes
+num_classes = len(class_names)
 
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+train_size = int(0.7 * len(dataset))
+val_size = int(0.15 * len(dataset))
+test_size = len(dataset) - train_size - val_size
 
-# --------------------------
-# 4. Model Setup
-# --------------------------
-model = create_model("efficientnet_b3", pretrained=True, num_classes=len(train_dataset.classes))
-model.to(DEVICE)
+train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
 
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+# --- Model ---
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}\n")
+model = create_model('efficientnet_b3', pretrained=True, num_classes=num_classes).to(device)
+
+# --- Loss & Optimizer ---
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+optimizer = optim.Adam(model.parameters(), lr=LR)
 
-# --------------------------
-# 5. Training + Validation Loop
-# --------------------------
-best_acc = 0
+# --- Training + Validation ---
+best_acc = 0.0
 
 for epoch in range(EPOCHS):
     model.train()
-    running_loss = 0
+    train_loss, train_correct = 0.0, 0
 
-    for images, labels in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{EPOCHS}"):
-        images, labels = images.to(DEVICE), labels.to(DEVICE)
-
+    for images, labels in train_loader:
+        images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
+
         outputs = model(images)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item()
+        train_loss += loss.item() * images.size(0)
+        _, preds = torch.max(outputs, 1)
+        train_correct += torch.sum(preds == labels.data)
+
+    train_loss /= len(train_loader.dataset)
+    train_acc = train_correct.double() / len(train_loader.dataset)
 
     # Validation
     model.eval()
-    correct = total = 0
-
+    val_loss, val_correct = 0.0, 0
     with torch.no_grad():
         for images, labels in val_loader:
-            images, labels = images.to(DEVICE), labels.to(DEVICE)
+            images, labels = images.to(device), labels.to(device)
             outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            val_loss += loss.item() * images.size(0)
             _, preds = torch.max(outputs, 1)
-            correct += (preds == labels).sum().item()
-            total += labels.size(0)
+            val_correct += torch.sum(preds == labels.data)
 
-    val_acc = correct / total
-    print(f"Validation Accuracy: {val_acc:.4f}")
+    val_loss /= len(val_loader.dataset)
+    val_acc = val_correct.double() / len(val_loader.dataset)
 
-    # Save best model
+    print(f"Epoch {epoch+1}/{EPOCHS}")
+    print(f"Train Loss: {train_loss:.3f}, Train Acc: {train_acc:.3f}")
+    print(f"Val   Loss: {val_loss:.3f}, Val   Acc: {val_acc:.3f}")
+
+    # Save Best Model
     if val_acc > best_acc:
         best_acc = val_acc
-        torch.save(model.state_dict(), MODEL_PATH)
-        print(f"Best model saved with accuracy: {best_acc:.4f}")
+        torch.save(model.state_dict(), BEST_MODEL_PATH)
+        print("Best model saved!\n")
 
-print("Training Complete!")
-
-# --------------------------
-# 6. Testing Phase
-# --------------------------
-print("\nStarting Testing Phase...")
-model.load_state_dict(torch.load(MODEL_PATH))
+# --- Testing Phase ---
+print("Testing best model...")
+model.load_state_dict(torch.load(BEST_MODEL_PATH))
 model.eval()
 
-correct = total = 0
-
+test_correct = 0
 with torch.no_grad():
-    for images, labels in tqdm(test_loader, desc="Testing"):
-        images, labels = images.to(DEVICE), labels.to(DEVICE)
+    for images, labels in test_loader:
+        images, labels = images.to(device), labels.to(device)
         outputs = model(images)
         _, preds = torch.max(outputs, 1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
+        test_correct += torch.sum(preds == labels.data)
 
-test_acc = correct / total
-print(f"Test Accuracy: {test_acc:.4f}")
+test_acc = test_correct.double() / len(test_loader.dataset)
+print(f"Test Accuracy: {test_acc:.3f}")
