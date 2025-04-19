@@ -38,10 +38,12 @@ while True:
     
     '''
     Grid will hopefully be:
-   
-    functions | punctuation | functions
-    ----------|-------------|-----------
-    letters   | numbers     | letters
+    
+    0         213           426         640
+    |functions | punctuation | functions |
+    |----------|-------------|-----------|240
+    |letters   | numbers     | letters   |480
+
     '''
 
     # Draw hand landmarks
@@ -52,6 +54,30 @@ while True:
                 # if cur_time - time_since_last_gest > gest_interval:
                 #     time_since_last_gest = cur_time
                 gesture = None
+
+                # region Get x-values of landmarks
+                w_x = hand_landmarks.landmark[0].x
+                t1_x = hand_landmarks.landmark[1].x
+                t2_x = hand_landmarks.landmark[2].x
+                t3_x = hand_landmarks.landmark[3].x
+                tt_x = hand_landmarks.landmark[4].x
+                i1_x = hand_landmarks.landmark[5].x
+                i2_x = hand_landmarks.landmark[6].x
+                i3_x = hand_landmarks.landmark[7].x
+                it_x = hand_landmarks.landmark[8].x
+                m1_x = hand_landmarks.landmark[9].x
+                m2_x = hand_landmarks.landmark[10].x
+                m3_x = hand_landmarks.landmark[11].x
+                mt_x = hand_landmarks.landmark[12].x
+                r1_x = hand_landmarks.landmark[13].x
+                r2_x = hand_landmarks.landmark[14].x
+                r3_x = hand_landmarks.landmark[15].x
+                rt_x = hand_landmarks.landmark[16].x
+                p1_x = hand_landmarks.landmark[17].x
+                p2_x = hand_landmarks.landmark[18].x
+                p3_x = hand_landmarks.landmark[19].x
+                pt_x = hand_landmarks.landmark[20].x
+                # endregion
 
                 # region Get y-values of landmarks
                 w_y = -hand_landmarks.landmark[0].y
@@ -75,7 +101,7 @@ while True:
                 p2_y = -hand_landmarks.landmark[18].y
                 p3_y = -hand_landmarks.landmark[19].y
                 pt_y = -hand_landmarks.landmark[20].y
-                # endregion
+                # endregion           
 
                 # Logic for calculating which gesture is detected
                 if (tt_y > w_y and it_y > w_y and pt_y < w_y): gesture = "Thumbs Up!"
