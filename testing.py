@@ -39,10 +39,10 @@ while True:
     '''
     Grid will hopefully be:
     
-    0         213           426         640
-    |functions | punctuation | functions |
-    |----------|-------------|-----------|240
-    |letters   | numbers     | letters   |480
+    0           213           426           640
+    |punctuation | functions   | punctuation |
+    |------------|-------------|-------------|240
+    |letters     | numbers     | letters     |480
 
     '''
 
