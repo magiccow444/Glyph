@@ -56,27 +56,27 @@ while True:
                 gesture = None
 
                 # region Get x-values of landmarks
-                w_x = hand_landmarks.landmark[0].x
-                t1_x = hand_landmarks.landmark[1].x
-                t2_x = hand_landmarks.landmark[2].x
-                t3_x = hand_landmarks.landmark[3].x
-                tt_x = hand_landmarks.landmark[4].x
-                i1_x = hand_landmarks.landmark[5].x
-                i2_x = hand_landmarks.landmark[6].x
-                i3_x = hand_landmarks.landmark[7].x
-                it_x = hand_landmarks.landmark[8].x
-                m1_x = hand_landmarks.landmark[9].x
-                m2_x = hand_landmarks.landmark[10].x
-                m3_x = hand_landmarks.landmark[11].x
-                mt_x = hand_landmarks.landmark[12].x
-                r1_x = hand_landmarks.landmark[13].x
-                r2_x = hand_landmarks.landmark[14].x
-                r3_x = hand_landmarks.landmark[15].x
-                rt_x = hand_landmarks.landmark[16].x
-                p1_x = hand_landmarks.landmark[17].x
-                p2_x = hand_landmarks.landmark[18].x
-                p3_x = hand_landmarks.landmark[19].x
-                pt_x = hand_landmarks.landmark[20].x
+                w_x = hand_landmarks.landmark[0].x      # wrist
+                t1_x = hand_landmarks.landmark[1].x     # thumb base
+                t2_x = hand_landmarks.landmark[2].x     # thumb middle joint
+                t3_x = hand_landmarks.landmark[3].x     # thumb last joint
+                tt_x = hand_landmarks.landmark[4].x     # thumb tip
+                i1_x = hand_landmarks.landmark[5].x     # index base
+                i2_x = hand_landmarks.landmark[6].x     # index middle joint
+                i3_x = hand_landmarks.landmark[7].x     # index last joint
+                it_x = hand_landmarks.landmark[8].x     # index tip
+                m1_x = hand_landmarks.landmark[9].x     # middle base
+                m2_x = hand_landmarks.landmark[10].x    # middle middle joint
+                m3_x = hand_landmarks.landmark[11].x    # middle last joint
+                mt_x = hand_landmarks.landmark[12].x    # middle tip
+                r1_x = hand_landmarks.landmark[13].x    # ring base
+                r2_x = hand_landmarks.landmark[14].x    # ring middle joint
+                r3_x = hand_landmarks.landmark[15].x    # ring last joint
+                rt_x = hand_landmarks.landmark[16].x    # ring tip
+                p1_x = hand_landmarks.landmark[17].x    # pinky base
+                p2_x = hand_landmarks.landmark[18].x    # pinky middle joint
+                p3_x = hand_landmarks.landmark[19].x    # pinky last joint
+                pt_x = hand_landmarks.landmark[20].x    # pinky tip
                 # endregion
 
                 # region Get y-values of landmarks
@@ -105,12 +105,14 @@ while True:
 
                 # Logic for calculating which gesture is detected
                 if (tt_y > w_y and it_y > w_y and pt_y < w_y): gesture = "Thumbs Up!"
-                elif (tt_y < w_y and it_y < w_y and pt_y > w_y): gesture = "Thumbs Down!"
+                elif (tt_y < w_y and it_y < w_y and pt_y > w_y): gesture = "\nThumbs Down!"
                 elif (tt_y > w_y and it_y > tt_y and mt_y > it_y): gesture = "Open Hand"
 
                 # Write the predicted gesture to the screen
                 if gesture:
                     cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    with open('example.glyph', 'a') as f:
+                        f.write(gesture)
 
                 # print('Shape: ', frame.shape)
                 # print('Size: ', frame.size)
