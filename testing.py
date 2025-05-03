@@ -2,6 +2,14 @@ import cv2
 import mediapipe as mp
 import time
 
+# Variables
+puncCounter1 = 0
+puncCounter2 = 0
+funcCounter = 0
+letterCounter1 = 0
+letterCounter2 = 0
+numberCounter = 0
+
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.7)
@@ -110,6 +118,37 @@ while True:
             #     cap.release()
             #     cv2.destroyAllWindows()
 
+            # Logic for checking which part of the grid the hand is in
+            for i in range(0, 21):
+                if hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                    puncCounter1 += 1
+                elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                    funcCounter += 1
+                elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                    puncCounter2 += 1
+                elif hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                    letterCounter1 += 1
+                elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                    numberCounter += 1
+                elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                    letterCounter2 += 1
+            
+            # Writing an "O" on the area the hand is in completely
+            if puncCounter1 == 21: cv2.putText(frame, "O", (106, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            elif puncCounter2 == 21: cv2.putText(frame, "O", (532, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            elif funcCounter == 21: cv2.putText(frame, "O", (319, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            elif letterCounter1 == 21: cv2.putText(frame, "O", (106, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            elif letterCounter2 == 21: cv2.putText(frame, "O", (532, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            elif numberCounter == 21: cv2.putText(frame, "O", (319, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            # Reset the counters for the next frame
+            puncCounter1 = 0
+            puncCounter2 = 0
+            funcCounter = 0
+            letterCounter1 = 0
+            letterCounter2 = 0
+            numberCounter = 0
+
             # Logic for calculating which gesture is detected
             if (tt_y > w_y and it_y > w_y and pt_y < w_y): gesture = "Thumbs Up!"
             elif (tt_y < w_y and it_y < w_y and pt_y > w_y): gesture = "Thumbs Down!"
@@ -117,10 +156,10 @@ while True:
 
             # Write the predicted gesture to the screen
             if gesture:
-                if (tt_x >= pt_x): 
+                if (w_x * frame.shape[1] <= 320): 
                     gesture = "Left Hand, " + gesture
                     cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                elif (tt_x < pt_x): 
+                elif (w_x * frame.shape[1] > 320): 
                     gesture = "Right Hand, " + gesture
                     cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 # with open('example.glyph', 'a') as f:
