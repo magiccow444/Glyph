@@ -27,7 +27,7 @@ mp_draw = mp.solutions.drawing_utils
 
 # Initialize time stuff
 time_since_last_gest = 0
-gest_interval = 2.0
+gest_interval = 1.0
 
 # Start webcam feed
 cap = cv2.VideoCapture(0)
@@ -88,14 +88,24 @@ def detectedGesture(xLandmarks, yLandmarks, section):
     if (isRightHand):
         if (tt_y > w_y and tt_y > i3_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y): gest = "FRH"
         elif (tt_y > w_y and tt_y < it_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y and it_y > m2_y): gest = "1RH"
-
+        elif (tt_y > w_y and tt_y < m2_y and tt_y > rt_y and tt_y > pt_y and r2_y < m2_y and it_y < mt_y and it_y > r2_y): gest = "2RH"
+        elif (tt_y > w_y and tt_y < m2_y and tt_y > pt_y and rt_y < mt_y and it_y < mt_y and it_y > r2_y and rt_y > i3_y): gest = "3RH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y > m3_y and rt_y > r3_y and pt_y > p3_y and tt_x > m1_x): gest = "4RH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y > m3_y and rt_y > r3_y and pt_y > p3_y and tt_x < i1_x): gest = "5RH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y < tt_y and rt_y < tt_y and pt_y > p3_y): gest = "🤘RH"
         else: return None
+
     else:
         if (tt_y > w_y and tt_y > i3_y and tt_y > mt_y and tt_y > rt_y and tt_y > pt_y): gest = "FLH"
         elif (tt_y > w_y and tt_y < it_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y and it_y > m2_y): gest = "1LH"
-
+        elif (tt_y > w_y and tt_y < m2_y and tt_y > rt_y and tt_y > pt_y and r2_y < m2_y and it_y < mt_y and it_y > r2_y): gest = "2LH"
+        elif (tt_y > w_y and tt_y < m2_y and tt_y > pt_y and rt_y < mt_y and it_y < mt_y and it_y > r2_y and rt_y > i3_y): gest = "3LH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y > m3_y and rt_y > r3_y and pt_y > p3_y and tt_x < m1_x): gest = "4LH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y > m3_y and rt_y > r3_y and pt_y > p3_y and tt_x > i1_x): gest = "5LH"
+        elif (tt_y > w_y and it_y > i3_y and mt_y < tt_y and rt_y < tt_y and pt_y > p3_y): gest = "🤘LH"
         else: return None
     
+    # Uses section to check which gesture means what
     match section:
         case 0:
             if gest in puncLHash: gest = puncLHash[gest]
@@ -157,69 +167,69 @@ while True:
         # Get hand landmarks for each hand detected
         for hand_landmarks in result.multi_hand_landmarks:
             # Only runs every specified seconds (So we dont just spam code off one sign)
-            # if cur_time - time_since_last_gest > gest_interval:
-            #     time_since_last_gest = cur_time
-            gesture = None
+            if cur_time - time_since_last_gest > gest_interval:
+                time_since_last_gest = cur_time
+                gesture = None
 
-            # Get all the x and y coordinates of the landmarks
-            for i in range(0, 21):
-                xLandmarks.append(hand_landmarks.landmark[i].x)
-            for i in range(0, 21):
-                yLandmarks.append(-hand_landmarks.landmark[i].y)
+                # Get all the x and y coordinates of the landmarks
+                for i in range(0, 21):
+                    xLandmarks.append(hand_landmarks.landmark[i].x)
+                for i in range(0, 21):
+                    yLandmarks.append(-hand_landmarks.landmark[i].y)
 
-            # Checks if the hand is left of right
-            if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): 
-                isRightHand = False
-            elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): 
-                isRightHand = True
+                # Checks if the hand is left of right
+                if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): 
+                    isRightHand = False
+                elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): 
+                    isRightHand = True
 
-            # Logic for checking which part of the grid the hand is in
-            for i in range(0, 21):
-                if hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
-                    puncCounterL += 1
-                elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
-                    funcCounter += 1
-                elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
-                    puncCounterR += 1
-                elif hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
-                    letterCounterL += 1
-                elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
-                    numberCounter += 1
-                elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
-                    letterCounterR += 1
-            
-            # Detecting a gesture based on which section it is in the frame
-            if puncCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[0])
-            elif puncCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[1])
-            elif funcCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[2])
-            elif letterCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[3])
-            elif letterCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[4])
-            elif numberCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[5])
+                # Logic for checking which part of the grid the hand is in
+                for i in range(0, 21):
+                    if hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                        puncCounterL += 1
+                    elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                        funcCounter += 1
+                    elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
+                        puncCounterR += 1
+                    elif hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                        letterCounterL += 1
+                    elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                        numberCounter += 1
+                    elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
+                        letterCounterR += 1
+                
+                # Detecting a gesture based on which section it is in the frame
+                if puncCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[0])
+                elif puncCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[1])
+                elif funcCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[2])
+                elif letterCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[3])
+                elif letterCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[4])
+                elif numberCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[5])
 
-            # Reset the counters for the next frame
-            puncCounterL = 0
-            puncCounterR = 0
-            funcCounter = 0
-            letterCounterL = 0
-            letterCounterR = 0
-            numberCounter = 0
+                # Reset the counters for the next frame
+                puncCounterL = 0
+                puncCounterR = 0
+                funcCounter = 0
+                letterCounterL = 0
+                letterCounterR = 0
+                numberCounter = 0
 
-            # Write the predicted gesture to the screen
-            if gesture:
-                if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                # with open('example.glyph', 'a') as f:
-                #     f.write(gesture)
+                # Write the predicted gesture to the screen
+                if gesture:
+                    if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    with open('example.glyph', 'a', encoding="utf-8") as f:
+                        f.write(gesture)
 
-            # print('Shape: ', frame.shape)
-            # print('Size: ', frame.size)
+                # print('Shape: ', frame.shape)
+                # print('Size: ', frame.size)
 
-            # Draw the hand connections
-            mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                # Draw the hand connections
+                mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-            # Clear the landmark arrays for the next frame
-            xLandmarks.clear()
-            yLandmarks.clear()
+                # Clear the landmark arrays for the next frame
+                xLandmarks.clear()
+                yLandmarks.clear()
 
     # Show the frame
     cv2.imshow("Glyph", frame)
