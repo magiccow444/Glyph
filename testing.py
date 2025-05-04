@@ -3,12 +3,14 @@ import mediapipe as mp
 import time
 
 # Variables
-puncCounter1 = 0
-puncCounter2 = 0
+puncCounterL = 0
+puncCounterR = 0
 funcCounter = 0
-letterCounter1 = 0
-letterCounter2 = 0
+letterCounterL = 0
+letterCounterR = 0
 numberCounter = 0
+xLandmarks = []
+yLandmarks = []
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -21,6 +23,64 @@ gest_interval = 2.0
 
 # Start webcam feed
 cap = cv2.VideoCapture(0)
+
+# Gesture detection function
+def detectedGesture(xLandmarks, yLandmarks):
+
+    # region Get x-values of landmarks
+    w_x = xLandmarks[0]      # wrist
+    t1_x = xLandmarks[1]     # thumb base
+    t2_x = xLandmarks[2]     # thumb middle joint
+    t3_x = xLandmarks[3]     # thumb last joint
+    tt_x = xLandmarks[4]     # thumb tip
+    i1_x = xLandmarks[5]     # index base
+    i2_x = xLandmarks[6]     # index middle joint
+    i3_x = xLandmarks[7]     # index last joint
+    it_x = xLandmarks[8]     # index tip
+    m1_x = xLandmarks[9]     # middle base
+    m2_x = xLandmarks[10]    # middle middle joint
+    m3_x = xLandmarks[11]    # middle last joint
+    mt_x = xLandmarks[12]    # middle tip
+    r1_x = xLandmarks[13]    # ring base
+    r2_x = xLandmarks[14]    # ring middle joint
+    r3_x = xLandmarks[15]    # ring last joint
+    rt_x = xLandmarks[16]    # ring tip
+    p1_x = xLandmarks[17]    # pinky base
+    p2_x = xLandmarks[18]    # pinky middle joint
+    p3_x = xLandmarks[19]    # pinky last joint
+    pt_x = xLandmarks[20]    # pinky tip
+    # endregion
+
+    # region Get y-values of landmarks
+    w_y = yLandmarks[0]
+    t1_y = yLandmarks[1]
+    t2_y = yLandmarks[2]
+    t3_y = yLandmarks[3]
+    tt_y = yLandmarks[4]
+    i1_y = yLandmarks[5]
+    i2_y = yLandmarks[6]
+    i3_y = yLandmarks[7]
+    it_y = yLandmarks[8]
+    m1_y = yLandmarks[9]
+    m2_y = yLandmarks[10]
+    m3_y = yLandmarks[11]
+    mt_y = yLandmarks[12]
+    r1_y = yLandmarks[13]
+    r2_y = yLandmarks[14]
+    r3_y = yLandmarks[15]
+    rt_y = yLandmarks[16]
+    p1_y = yLandmarks[17]
+    p2_y = yLandmarks[18]
+    p3_y = yLandmarks[19]
+    pt_y = yLandmarks[20]
+    # endregion           
+
+    # Logic for calculating which gesture is detected
+    if (tt_y > w_y and it_y > w_y and pt_y < w_y): return "Thumbs Up!"
+    elif (tt_y < w_y and it_y < w_y and pt_y > w_y): return "Thumbs Down!"
+    elif (tt_y > w_y and it_y > tt_y and mt_y > it_y): return "Open Hand"
+    else: return None
+
 
 while True:
     success, frame = cap.read()
@@ -65,54 +125,14 @@ while True:
 
             gesture = None
 
-            # region Get x-values of landmarks
-            w_x = hand_landmarks.landmark[0].x      # wrist
-            t1_x = hand_landmarks.landmark[1].x     # thumb base
-            t2_x = hand_landmarks.landmark[2].x     # thumb middle joint
-            t3_x = hand_landmarks.landmark[3].x     # thumb last joint
-            tt_x = hand_landmarks.landmark[4].x     # thumb tip
-            i1_x = hand_landmarks.landmark[5].x     # index base
-            i2_x = hand_landmarks.landmark[6].x     # index middle joint
-            i3_x = hand_landmarks.landmark[7].x     # index last joint
-            it_x = hand_landmarks.landmark[8].x     # index tip
-            m1_x = hand_landmarks.landmark[9].x     # middle base
-            m2_x = hand_landmarks.landmark[10].x    # middle middle joint
-            m3_x = hand_landmarks.landmark[11].x    # middle last joint
-            mt_x = hand_landmarks.landmark[12].x    # middle tip
-            r1_x = hand_landmarks.landmark[13].x    # ring base
-            r2_x = hand_landmarks.landmark[14].x    # ring middle joint
-            r3_x = hand_landmarks.landmark[15].x    # ring last joint
-            rt_x = hand_landmarks.landmark[16].x    # ring tip
-            p1_x = hand_landmarks.landmark[17].x    # pinky base
-            p2_x = hand_landmarks.landmark[18].x    # pinky middle joint
-            p3_x = hand_landmarks.landmark[19].x    # pinky last joint
-            pt_x = hand_landmarks.landmark[20].x    # pinky tip
-            # endregion
+            for i in range(0, 21):
+                xLandmarks.append(hand_landmarks.landmark[i].x)
+            
+            for i in range(0, 21):
+                yLandmarks.append(-hand_landmarks.landmark[i].y)
 
-            # region Get y-values of landmarks
-            w_y = -hand_landmarks.landmark[0].y
-            t1_y = -hand_landmarks.landmark[1].y
-            t2_y = -hand_landmarks.landmark[2].y
-            t3_y = -hand_landmarks.landmark[3].y
-            tt_y = -hand_landmarks.landmark[4].y
-            i1_y = -hand_landmarks.landmark[5].y
-            i2_y = -hand_landmarks.landmark[6].y
-            i3_y = -hand_landmarks.landmark[7].y
-            it_y = -hand_landmarks.landmark[8].y
-            m1_y = -hand_landmarks.landmark[9].y
-            m2_y = -hand_landmarks.landmark[10].y
-            m3_y = -hand_landmarks.landmark[11].y
-            mt_y = -hand_landmarks.landmark[12].y
-            r1_y = -hand_landmarks.landmark[13].y
-            r2_y = -hand_landmarks.landmark[14].y
-            r3_y = -hand_landmarks.landmark[15].y
-            rt_y = -hand_landmarks.landmark[16].y
-            p1_y = -hand_landmarks.landmark[17].y
-            p2_y = -hand_landmarks.landmark[18].y
-            p3_y = -hand_landmarks.landmark[19].y
-            pt_y = -hand_landmarks.landmark[20].y
-            # endregion           
-
+            gesture = detectedGesture(xLandmarks, yLandmarks)
+            
             # Logic for using a gesture to end the capture (Also an example to use for de-normalizing the landmark's coordinates to compare them to the video frame proportions)
             # if (tt_y > w_y and it_y > tt_y and mt_y > it_y and (-w_y * frame.shape[0]) < 240 and (w_x * frame.shape[1]) > 213 and (w_x * frame.shape[1]) < 426): 
             #     cap.release()
@@ -121,45 +141,52 @@ while True:
             # Logic for checking which part of the grid the hand is in
             for i in range(0, 21):
                 if hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
-                    puncCounter1 += 1
+                    puncCounterL += 1
                 elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
                     funcCounter += 1
                 elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] < 240:
-                    puncCounter2 += 1
+                    puncCounterR += 1
                 elif hand_landmarks.landmark[i].x * frame.shape[1] < 213 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
-                    letterCounter1 += 1
+                    letterCounterL += 1
                 elif hand_landmarks.landmark[i].x * frame.shape[1] > 213 and hand_landmarks.landmark[i].x * frame.shape[1] < 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
                     numberCounter += 1
                 elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
-                    letterCounter2 += 1
+                    letterCounterR += 1
             
             # Writing an "O" on the area the hand is in completely
-            if puncCounter1 == 21: cv2.putText(frame, "O", (106, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            elif puncCounter2 == 21: cv2.putText(frame, "O", (532, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            elif funcCounter == 21: cv2.putText(frame, "O", (319, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            elif letterCounter1 == 21: cv2.putText(frame, "O", (106, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            elif letterCounter2 == 21: cv2.putText(frame, "O", (532, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            elif numberCounter == 21: cv2.putText(frame, "O", (319, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            if puncCounterL == 21: 
+                cv2.putText(frame, "O", (106, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            elif puncCounterR == 21: 
+                cv2.putText(frame, "O", (532, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            elif funcCounter == 21: 
+                cv2.putText(frame, "O", (319, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            elif letterCounterL == 21: 
+                cv2.putText(frame, "O", (106, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            elif letterCounterR == 21: 
+                cv2.putText(frame, "O", (532, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            elif numberCounter == 21: 
+                cv2.putText(frame, "O", (319, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
 
             # Reset the counters for the next frame
-            puncCounter1 = 0
-            puncCounter2 = 0
+            puncCounterL = 0
+            puncCounterR = 0
             funcCounter = 0
-            letterCounter1 = 0
-            letterCounter2 = 0
+            letterCounterL = 0
+            letterCounterR = 0
             numberCounter = 0
-
-            # Logic for calculating which gesture is detected
-            if (tt_y > w_y and it_y > w_y and pt_y < w_y): gesture = "Thumbs Up!"
-            elif (tt_y < w_y and it_y < w_y and pt_y > w_y): gesture = "Thumbs Down!"
-            elif (tt_y > w_y and it_y > tt_y and mt_y > it_y): gesture = "Open Hand"
 
             # Write the predicted gesture to the screen
             if gesture:
-                if (w_x * frame.shape[1] <= 320): 
+                if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): 
                     gesture = "Left Hand, " + gesture
                     cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                elif (w_x * frame.shape[1] > 320): 
+                elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): 
                     gesture = "Right Hand, " + gesture
                     cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 # with open('example.glyph', 'a') as f:
@@ -170,6 +197,10 @@ while True:
 
             # Draw the hand connections
             mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+            # Clear the landmark arrays for the next frame
+            xLandmarks.clear()
+            yLandmarks.clear()
 
     # Show the frame
     cv2.imshow("Hand Tracker", frame)
