@@ -3,6 +3,7 @@ import mediapipe as mp
 import time
 
 # Variables
+isRightHand = False
 puncCounterL = 0
 puncCounterR = 0
 funcCounter = 0
@@ -11,6 +12,13 @@ letterCounterR = 0
 numberCounter = 0
 xLandmarks = []
 yLandmarks = []
+frameSection = [0, 1, 2, 3, 4, 5]
+puncLHash = {"FLH" : "(", "1LH" : ")", "2LH" : "{", "3LH" : "}", "4LH" : "'", "5LH" : "\"", "🤘LH" : ":"}
+puncRHash = {"FRH" : "=", "1RH" : "+", "2RH" : "-", "3RH" : "*", "4RH" : "/", "5RH" : "^", "🤘RH" : ";"}
+funcHash = {"FRH" : " ", "1RH" : "\n", "2RH" : "🖨", "3RH" : "❓", "4RH" : "⁉", "5RH" : "🔀", "FLH" : "🌌"}
+letterLHash = {"FLH" : "y", "1LH" : "z"}
+letterRHash = {"FRH" : "a", "1RH" : "b", "2RH" : "c", "3RH" : "d", "4RH" : "e", "5RH" : "x"}
+numberHash = {"FRH" : "✊", "1RH" : "☝", "2RH" : "✌", "3RH" : "🤟", "4RH" : "🖖", "5RH" : "🖐", "1LH" : "👌", "2LH" : "🤘", "3LH" : "🙏", "4LH" : "🤞"}
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -25,7 +33,8 @@ gest_interval = 2.0
 cap = cv2.VideoCapture(0)
 
 # Gesture detection function
-def detectedGesture(xLandmarks, yLandmarks):
+def detectedGesture(xLandmarks, yLandmarks, section):
+    gest = None
 
     # region Get x-values of landmarks
     w_x = xLandmarks[0]      # wrist
@@ -74,14 +83,41 @@ def detectedGesture(xLandmarks, yLandmarks):
     p3_y = yLandmarks[19]
     pt_y = yLandmarks[20]
     # endregion           
-
+    
     # Logic for calculating which gesture is detected
-    if (tt_y > w_y and it_y > w_y and pt_y < w_y): return "Thumbs Up!"
-    elif (tt_y < w_y and it_y < w_y and pt_y > w_y): return "Thumbs Down!"
-    elif (tt_y > w_y and it_y > tt_y and mt_y > it_y): return "Open Hand"
-    else: return None
+    if (isRightHand):
+        if (tt_y > w_y and tt_y > i3_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y): gest = "FRH"
+        elif (tt_y > w_y and tt_y < it_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y and it_y > m2_y): gest = "1RH"
 
+        else: return None
+    else:
+        if (tt_y > w_y and tt_y > i3_y and tt_y > mt_y and tt_y > rt_y and tt_y > pt_y): gest = "FLH"
+        elif (tt_y > w_y and tt_y < it_y and tt_y > m3_y and tt_y > r3_y and tt_y > p3_y and it_y > m2_y): gest = "1LH"
 
+        else: return None
+    
+    match section:
+        case 0:
+            if gest in puncLHash: gest = puncLHash[gest]
+            else: return None
+        case 1:
+            if gest in puncRHash: gest = puncRHash[gest]
+            else: return None
+        case 2:
+            if gest in funcHash: gest = funcHash[gest]
+            else: return None
+        case 3:
+            if gest in letterLHash: gest = letterLHash[gest]
+            else: return None
+        case 4:
+            if gest in letterRHash: gest = letterRHash[gest]
+            else: return None
+        case 5:
+            if gest in numberHash: gest = numberHash[gest]
+            else: return None
+
+    return gest
+   
 while True:
     success, frame = cap.read()
     if not success:
@@ -116,27 +152,26 @@ while True:
 
     '''
 
-    # Draw hand landmarks
+    # If hands are detected
     if result.multi_hand_landmarks:
-        # if cur_time - time_since_last_gest > gest_interval:
-        #     time_since_last_gest = cur_time
+        # Get hand landmarks for each hand detected
         for hand_landmarks in result.multi_hand_landmarks:
             # Only runs every specified seconds (So we dont just spam code off one sign)
-
+            # if cur_time - time_since_last_gest > gest_interval:
+            #     time_since_last_gest = cur_time
             gesture = None
 
+            # Get all the x and y coordinates of the landmarks
             for i in range(0, 21):
                 xLandmarks.append(hand_landmarks.landmark[i].x)
-            
             for i in range(0, 21):
                 yLandmarks.append(-hand_landmarks.landmark[i].y)
 
-            gesture = detectedGesture(xLandmarks, yLandmarks)
-            
-            # Logic for using a gesture to end the capture (Also an example to use for de-normalizing the landmark's coordinates to compare them to the video frame proportions)
-            # if (tt_y > w_y and it_y > tt_y and mt_y > it_y and (-w_y * frame.shape[0]) < 240 and (w_x * frame.shape[1]) > 213 and (w_x * frame.shape[1]) < 426): 
-            #     cap.release()
-            #     cv2.destroyAllWindows()
+            # Checks if the hand is left of right
+            if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): 
+                isRightHand = False
+            elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): 
+                isRightHand = True
 
             # Logic for checking which part of the grid the hand is in
             for i in range(0, 21):
@@ -153,25 +188,13 @@ while True:
                 elif hand_landmarks.landmark[i].x * frame.shape[1] > 426 and hand_landmarks.landmark[i].y * frame.shape[0] > 240:
                     letterCounterR += 1
             
-            # Writing an "O" on the area the hand is in completely
-            if puncCounterL == 21: 
-                cv2.putText(frame, "O", (106, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            elif puncCounterR == 21: 
-                cv2.putText(frame, "O", (532, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            elif funcCounter == 21: 
-                cv2.putText(frame, "O", (319, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            elif letterCounterL == 21: 
-                cv2.putText(frame, "O", (106, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            elif letterCounterR == 21: 
-                cv2.putText(frame, "O", (532, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            elif numberCounter == 21: 
-                cv2.putText(frame, "O", (319, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
+            # Detecting a gesture based on which section it is in the frame
+            if puncCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[0])
+            elif puncCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[1])
+            elif funcCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[2])
+            elif letterCounterL == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[3])
+            elif letterCounterR == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[4])
+            elif numberCounter == 21: gesture = detectedGesture(xLandmarks, yLandmarks, frameSection[5])
 
             # Reset the counters for the next frame
             puncCounterL = 0
@@ -183,12 +206,8 @@ while True:
 
             # Write the predicted gesture to the screen
             if gesture:
-                if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): 
-                    gesture = "Left Hand, " + gesture
-                    cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): 
-                    gesture = "Right Hand, " + gesture
-                    cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                if (hand_landmarks.landmark[0].x * frame.shape[1] <= 320): cv2.putText(frame, gesture, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                elif (hand_landmarks.landmark[0].x * frame.shape[1] > 320): cv2.putText(frame, gesture, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 # with open('example.glyph', 'a') as f:
                 #     f.write(gesture)
 
@@ -203,7 +222,7 @@ while True:
             yLandmarks.clear()
 
     # Show the frame
-    cv2.imshow("Hand Tracker", frame)
+    cv2.imshow("Glyph", frame)
 
     # Break with ESC key
     if cv2.waitKey(1) & 0xFF == 27:
