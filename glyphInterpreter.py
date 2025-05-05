@@ -8,6 +8,7 @@ ifStatementValues = [] # -1 = There was a false if statment found before, 0 = Fa
 numIfs = 0 # I added this variable to track the number of if and elifs so that we can match that to the number of brackets we find for nested logic, 
            #if numIfs = 1 and we find a bracket then we know we are still in the outer if so just keep going but when it is 0 and we find a bracket we know it 
            # is the bracket for the outer if and we know to break out of it
+lineNumber = 0
 
 ifStatementTrue = False
 
@@ -107,10 +108,10 @@ def equal(o1, o2):
 
     if not o1.isdigit():
         o1 = eval_var(o1, s)
-    if not o2.isdigit:
+    if not o2.isdigit():
         o2 = eval_var(o2, s)
 
-    ifStatementTrue = o1 == o2
+    ifStatementTrue = int(o1) == int(o2)
     if ifStatementTrue == True:
         return 1
     return 0
@@ -121,10 +122,10 @@ def greaterThan(o1, o2):
 
     if not o1.isdigit():
         o1 = eval_var(o1, s)
-    if not o2.isdigit:
+    if not o2.isdigit():
         o2 = eval_var(o2, s)
 
-    ifStatementTrue = o1 > o2
+    ifStatementTrue = int(o1) > int(o2)
     if ifStatementTrue == True:
         return 1
     return 0
@@ -135,10 +136,10 @@ def lessThan(o1, o2):
 
     if not o1.isdigit():
         o1 = eval_var(o1, s)
-    if not o2.isdigit:
+    if not o2.isdigit():
         o2 = eval_var(o2, s)
 
-    ifStatementTrue = o1 < o2
+    ifStatementTrue = int(o1) < int(o2)
     if ifStatementTrue == True:
         return 1
     return 0
@@ -159,13 +160,78 @@ def eval_line(line):
         line = power(line)
     return line
 
+def printer(line):
+    call = line.split("🖨(")[1]
+    val = call.split(")")[0]
+
+    # Printing a string
+    if val.startswith('"'):
+        string = val.split('"')[1]
+        print(string)
+
+    # Printing a number
+    elif val.isdigit():
+        print(val)
+    
+    # Printing mathematical operations
+    elif '+' in val or '-' in val or '*' in val or '/' in val or '%' in val or '^' in val:
+        val = eval_line(val)
+        print(val)
+    else:
+        print(eval_var(val, s))
+
+def ifStatement(line):
+    call = line.split("❓(")[1]
+    condition = call.split(")")[0]
+
+    if '==' in condition:
+        o1, o2 = condition.split('==')
+        ifStatementValues.append(equal(o1, o2))
+
+    elif '>' in condition:
+        o1, o2 = condition.split('>')
+        ifStatementValues.append(greaterThan(o1, o2))
+        
+    elif '<' in condition:
+        o1, o2 = condition.split('<')
+        ifStatementValues.append(lessThan(o1, o2))
+
+def elifStatement(line):
+    call = line.split("⁉(")[1]
+    condition = call.split(")")[0]
+    if '==' in condition:
+        o1, o2 = condition.split('==')
+        ifStatementValues[-1] = equal(o1, o2)
+
+    elif '>' in condition:
+        o1, o2 = condition.split('>')
+        ifStatementValues[-1] = greaterThan(o1, o2)
+        
+    elif '<' in condition:
+        o1, o2 = condition.split('<')
+        ifStatementValues[-1] = lessThan(o1, o2)
+
+def assignVar(line):
+    var, expr = line.split('=')
+
+    if '+' in expr or '-' in expr or '*' in expr or '/' in expr or '%' in expr or '^' in expr:
+        expr = str(eval_line(expr))
+
+    expr = expr.strip()
+
+    if expr.isdigit():
+        s[var] = eval_expr(expr)
+    else:
+        expr = eval_var(expr, s)
+        s[var] = eval_expr(expr)
+
 arg_file = sys.argv[1]
 file = open(arg_file, "r", encoding="utf-8")
 lines = file.readlines()
 
 for line in lines:
     lineNumber = lines.index(line) + 1
-
+    
     # Changes the emojis to numbers for the interpreter
     for emoji, num in emojiNumbers.items():
         line = line.replace(emoji, str(num))
@@ -206,24 +272,7 @@ for line in lines:
     
     # Printer logic
     if line.startswith("🖨("):
-        call = line.split("🖨(")[1]
-        val = call.split(")")[0]
-
-        # Printing a string
-        if val.startswith('"'):
-            string = val.split('"')[1]
-            print(string)
-
-        # Printing a number
-        elif val.isdigit():
-            print(val)
-        
-        # Printing mathematical operations
-        elif '+' in val or '-' in val or '*' in val or '/' in val or '%' in val or '^' in val:
-            val = eval_line(val)
-            print(val)
-        else:
-            print(eval_var(val, s))
+        printer(line)
         
     # Comment logic (**IMPORTANT** Don't forget to move it above all the if statement logic or else it will break the code)
     elif line.startswith("#"):
@@ -231,44 +280,11 @@ for line in lines:
 
     # If statement logic
     elif '❓' in line:
-        call = line.split("❓(")[1]
-        condition = call.split(")")[0]
-
-        # Look for the if statement logic
-        # Once found go to the function that corresponds to the logic (> < == != >= <=)
-        # Then check each condition and return if it is true or false
-        # If it is true then append the true to the array and execute the if statement code and skip all the elifs and else statements until the }}, then pop
-        # If it is false then append the false to the array and check the next elif statent and do the same thing
-        # If all the elifs are false then execute the else statement
-        
-        if '==' in condition:
-            o1, o2 = condition.split('==')
-            ifStatementValues.append(equal(o1, o2))
-
-        elif '>' in condition:
-            o1, o2 = condition.split('>')
-            ifStatementValues.append(greaterThan(o1, o2))
-            
-        elif '<' in condition:
-            o1, o2 = condition.split('<')
-            ifStatementValues.append(lessThan(o1, o2))
-        continue
+        ifStatement(line)
 
     # Elif statement logic 
     elif '⁉' in line:
-        call = line.split("⁉(")[1]
-        condition = call.split(")")[0]
-        if '==' in condition:
-            o1, o2 = condition.split('==')
-            ifStatementValues[-1] = equal(o1, o2)
-
-        elif '>' in condition:
-            o1, o2 = condition.split('>')
-            ifStatementValues[-1] = greaterThan(o1, o2)
-            
-        elif '<' in condition:
-            o1, o2 = condition.split('<')
-            ifStatementValues[-1] = lessThan(o1, o2)
+        elifStatement(line)
     
     # Else statement logic
     elif '🔀' in line:
@@ -276,18 +292,7 @@ for line in lines:
 
     # Assigning variables
     elif '=' in line:
-        var, expr = line.split('=')
-
-        if '+' in expr or '-' in expr or '*' in expr or '/' in expr or '%' in expr or '^' in expr:
-            expr = str(eval_line(expr))
-
-        expr = expr.strip()
-
-        if expr.isdigit():
-            s[var] = eval_expr(expr)
-        else:
-            expr = eval_var(expr, s)
-            s[var] = eval_expr(expr)
+        assignVar(line)
 
     else:
         raise Exception(f"Line {lineNumber}: '{line} is not a valid statement")
