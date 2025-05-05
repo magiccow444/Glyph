@@ -103,6 +103,8 @@ def power(val):
     return int(o1) ** int(o2)
 
 def equal(o1, o2):
+    global ifStatementTrue
+
     o1 = o1.strip()
     o2 = o2.strip()
 
@@ -117,6 +119,8 @@ def equal(o1, o2):
     return 0
 
 def greaterThan(o1, o2):
+    global ifStatementTrue
+
     o1 = o1.strip()
     o2 = o2.strip()
 
@@ -131,6 +135,8 @@ def greaterThan(o1, o2):
     return 0
 
 def lessThan(o1, o2):
+    global ifStatementTrue
+
     o1 = o1.strip()
     o2 = o2.strip()
 
@@ -181,6 +187,8 @@ def printer(line):
         print(eval_var(val, s))
 
 def ifStatement(line):
+    global ifStatementValues
+
     call = line.split("❓(")[1]
     condition = call.split(")")[0]
 
@@ -197,6 +205,8 @@ def ifStatement(line):
         ifStatementValues.append(lessThan(o1, o2))
 
 def elifStatement(line):
+    global ifStatementValues
+
     call = line.split("⁉(")[1]
     condition = call.split(")")[0]
     if '==' in condition:
@@ -229,46 +239,47 @@ arg_file = sys.argv[1]
 file = open(arg_file, "r", encoding="utf-8")
 lines = file.readlines()
 
-for line in lines:
+def interpret(line, lines):
+    global numIfs, lineNumber, ifStatementTrue, ifStatementValues, emojiNumbers, s
     lineNumber = lines.index(line) + 1
-    
+
     # Changes the emojis to numbers for the interpreter
     for emoji, num in emojiNumbers.items():
         line = line.replace(emoji, str(num))
 
-    # If there is an if or elif statement and the outer if statement if false then we increment our counter and continue
+    # If there is an if or elif statement and the outer if statement if false then we increment our counter and return
     if '❓' in line and ifStatementValues and ifStatementValues[-1] == 0:
         numIfs += 1
-        continue
+        return
     elif '⁉' in line and ifStatementValues and ifStatementValues[-1] == 0:
         numIfs += 1
-        continue
+        return
     
     # I used this double braket to basically know when to be done with the if logic
     if '}}' in line:
         if ifStatementValues and ifStatementValues[-1] == 0:
-            continue
+            return
         ifStatementValues.pop()
-        continue
+        return
 
     # If we find a bracket and the last if statement was true we change the value to 2 so that we know we can skip the rest of the if elif else stuff
     # Elif we find a bracket and the last if statement was false we either check if we are in a false nested if, then we should just skip, or we change 
     # the value to -1 to essentially tell the next elifs and elses that we are open for business
     if ifStatementValues and '}' in line and ifStatementValues[-1] == 1:
         ifStatementValues[-1] = 2
-        continue
+        return
     elif ifStatementValues and '}' in line and ifStatementValues[-1] == 0:
         if numIfs > 0:
             numIfs -= 1
-            continue
+            return
         ifStatementValues[-1] = -1
-        continue
+        return
     
     # If we are in a false if statement or if we have already run our true if statement then we skip the line
     if ifStatementValues and ifStatementValues[-1] == 2:
-        continue
+        return
     elif ifStatementValues and ifStatementValues[-1] == 0:
-        continue
+        return
     
     # Printer logic
     if line.startswith("🖨("):
@@ -276,7 +287,7 @@ for line in lines:
         
     # Comment logic (**IMPORTANT** Don't forget to move it above all the if statement logic or else it will break the code)
     elif line.startswith("#"):
-        continue
+        return
 
     # If statement logic
     elif '❓' in line:
@@ -295,5 +306,7 @@ for line in lines:
         assignVar(line)
 
     else:
-        raise Exception(f"Line {lineNumber}: '{line} is not a valid statement")
+        raise Exception(f"Line {lineNumber}: '{line}' is not a valid statement")
 
+for line in lines:
+    interpret(line, lines)
