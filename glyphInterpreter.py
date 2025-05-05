@@ -11,6 +11,7 @@ numIfs = 0 # I added this variable to track the number of if and elifs so that w
 lineNumber = 0
 
 ifStatementTrue = False
+forLoopRun = False # Used to skip the lines in the for loop if we already ran it so we don't run it all an extra time
 
 def eval_expr(expr):
     return expr
@@ -235,17 +236,56 @@ def assignVar(line):
         expr = eval_var(expr, s)
         s[var] = eval_expr(expr)
 
+def forLoop(line, lines):
+    global forLoopRun
+
+    cond = line.split("🌌(")[1]
+    cond = cond.split(")")[0]
+    begin, end = cond.split(';')
+
+    if not begin.isdigit():
+        begin = eval_var(begin, s)
+    if not end.isdigit():
+        end = eval_var(end, s)
+
+    begin = int(begin)
+    end = int(end)
+
+    block = []
+    i = lineNumber
+
+    # Go through the lines until the end of the for loop and store it in block
+    while i < len(lines) and lines[i].strip() != ':':
+        block.append(lines[i])
+        i += 1
+
+    count = end - begin
+
+    # Run through block count times
+    for _ in range(count):
+        for b_line in block:
+            interpret(b_line, lines)
+
+    forLoopRun = True
+
 arg_file = sys.argv[1]
 file = open(arg_file, "r", encoding="utf-8")
 lines = file.readlines()
 
 def interpret(line, lines):
-    global numIfs, lineNumber, ifStatementTrue, ifStatementValues, emojiNumbers, s
+    global numIfs, lineNumber, ifStatementTrue, ifStatementValues, emojiNumbers, s, forLoopRun
     lineNumber = lines.index(line) + 1
 
     # Changes the emojis to numbers for the interpreter
     for emoji, num in emojiNumbers.items():
         line = line.replace(emoji, str(num))
+
+    # If we are at the end of a for loop return and set forLoopRun tofalse so we can run code like normal
+    if line.startswith(':'):
+        forLoopRun = False
+        return
+    if forLoopRun:
+        return
 
     # If there is an if or elif statement and the outer if statement if false then we increment our counter and return
     if '❓' in line and ifStatementValues and ifStatementValues[-1] == 0:
@@ -304,6 +344,10 @@ def interpret(line, lines):
     # Assigning variables
     elif '=' in line:
         assignVar(line)
+
+    # For loop logic
+    elif '🌌' in line:
+        forLoop(line, lines)
 
     else:
         raise Exception(f"Line {lineNumber}: '{line}' is not a valid statement")
