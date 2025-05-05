@@ -1,0 +1,2 @@
+Glyph is a sign language-based programming language leveraging Python, TextX, OpenCV, and MediaPipe hands to capture hand signs live, enabling users to write code through gestures, designed to assist non-English speakers and motor-impaired individuals.
+Glyph addresses accessibility by eliminating the need for users to learn English-based syntax, which dominates over 80% of programming languages, offering an inclusive solution for the global population, where only approximately 25% speak English.
