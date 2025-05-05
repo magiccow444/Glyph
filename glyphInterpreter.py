@@ -5,6 +5,10 @@ emojiNumbers = {"✊" : 0, "☝" : 1, "✌" : 2, "🤟" : 3, "🖖" : 4, "🖐" 
 
 ifStatementValues = [] # -1 = There was a false if statment found before, 0 = False, 1 = True, 2 = Our true statement was already executed so skip all this
 
+numIfs = 0 # I added this variable to track the number of if and elifs so that we can match that to the number of brackets we find for nested logic, 
+           #if numIfs = 1 and we find a bracket then we know we are still in the outer if so just keep going but when it is 0 and we find a bracket we know it 
+           # is the bracket for the outer if and we know to break out of it
+
 ifStatementTrue = False
 
 def eval_expr(expr):
@@ -139,6 +143,7 @@ def lessThan(o1, o2):
         return 1
     return 0
 
+# Helper function to evaluate the line and return the result for math stuff
 def eval_line(line):
     if '+' in line:
         line = add(line)
@@ -161,16 +166,71 @@ lines = file.readlines()
 for line in lines:
     lineNumber = lines.index(line) + 1
 
+    # Changes the emojis to numbers for the interpreter
     for emoji, num in emojiNumbers.items():
         line = line.replace(emoji, str(num))
 
-    print(ifStatementValues)
-
-    # If statement
-    if '❓' in line:
+    # If there is an if or elif statement and the outer if statement if false then we increment our counter and continue
+    if '❓' in line and ifStatementValues and ifStatementValues[-1] == 0:
+        numIfs += 1
+        continue
+    elif '⁉' in line and ifStatementValues and ifStatementValues[-1] == 0:
+        numIfs += 1
+        continue
+    
+    # I used this double braket to basically know when to be done with the if logic
+    if '}}' in line:
         if ifStatementValues and ifStatementValues[-1] == 0:
             continue
+        ifStatementValues.pop()
+        continue
 
+    # If we find a bracket and the last if statement was true we change the value to 2 so that we know we can skip the rest of the if elif else stuff
+    # Elif we find a bracket and the last if statement was false we either check if we are in a false nested if, then we should just skip, or we change 
+    # the value to -1 to essentially tell the next elifs and elses that we are open for business
+    if ifStatementValues and '}' in line and ifStatementValues[-1] == 1:
+        ifStatementValues[-1] = 2
+        continue
+    elif ifStatementValues and '}' in line and ifStatementValues[-1] == 0:
+        if numIfs > 0:
+            numIfs -= 1
+            continue
+        ifStatementValues[-1] = -1
+        continue
+    
+    # If we are in a false if statement or if we have already run our true if statement then we skip the line
+    if ifStatementValues and ifStatementValues[-1] == 2:
+        continue
+    elif ifStatementValues and ifStatementValues[-1] == 0:
+        continue
+    
+    # Printer logic
+    if line.startswith("🖨("):
+        call = line.split("🖨(")[1]
+        val = call.split(")")[0]
+
+        # Printing a string
+        if val.startswith('"'):
+            string = val.split('"')[1]
+            print(string)
+
+        # Printing a number
+        elif val.isdigit():
+            print(val)
+        
+        # Printing mathematical operations
+        elif '+' in val or '-' in val or '*' in val or '/' in val or '%' in val or '^' in val:
+            val = eval_line(val)
+            print(val)
+        else:
+            print(eval_var(val, s))
+        
+    # Comment logic (**IMPORTANT** Don't forget to move it above all the if statement logic or else it will break the code)
+    elif line.startswith("#"):
+        continue
+
+    # If statement logic
+    elif '❓' in line:
         call = line.split("❓(")[1]
         condition = call.split(")")[0]
 
@@ -194,57 +254,8 @@ for line in lines:
             ifStatementValues.append(lessThan(o1, o2))
         continue
 
-    if '}}' in line:
-        if ifStatementValues and ifStatementValues[-1] == 0:
-            continue
-        ifStatementValues.pop()
-        continue
-
-    if ifStatementValues and '}' in line and ifStatementValues[-1] == 1:
-        ifStatementValues[-1] = 2
-        continue
-
-    if ifStatementValues and '}' in line and ifStatementValues[-1] == 0:
-        ifStatementValues[-1] = -1
-        continue
-    
-    if ifStatementValues and ifStatementValues[-1] == 2:
-        continue
-
-    if ifStatementValues and ifStatementValues[-1] == 0:
-        continue
-
-    if line.startswith("🖨("):
-        call = line.split("🖨(")[1]
-        val = call.split(")")[0]
-
-        # Printing a string
-        if val.startswith('"'):
-            string = val.split('"')[1]
-            print(string)
-
-        # Printing a number
-        elif val.isdigit():
-            print(val)
-        
-        # Printing mathematical operations
-        elif '+' in val or '-' in val or '*' in val or '/' in val or '%' in val or '^' in val:
-            val = eval_line(val)
-            print(val)
-        else:
-            print(eval_var(val, s))
-        
-    # Comment
-    elif line.startswith("#"):
-        continue
-
-    # Elif statement     
+    # Elif statement logic 
     elif '⁉' in line:
-        if ifStatementValues and ifStatementValues[-1] == 1:
-            continue
-        if ifStatementValues and ifStatementValues[-1] == 0:
-            continue
-
         call = line.split("⁉(")[1]
         condition = call.split(")")[0]
         if '==' in condition:
@@ -259,13 +270,8 @@ for line in lines:
             o1, o2 = condition.split('<')
             ifStatementValues[-1] = lessThan(o1, o2)
     
-    # Else statement
+    # Else statement logic
     elif '🔀' in line:
-        if ifStatementValues and ifStatementValues[-1] == 1:
-            continue
-        if ifStatementValues and ifStatementValues[-1] == 0:
-            continue
-
         ifStatementValues[-1] = 1
 
     # Assigning variables
@@ -282,9 +288,6 @@ for line in lines:
         else:
             expr = eval_var(expr, s)
             s[var] = eval_expr(expr)
-
-    elif '}' in line:
-        continue
 
     else:
         raise Exception(f"Line {lineNumber}: '{line} is not a valid statement")
