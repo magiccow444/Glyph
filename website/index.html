@@ -1,10 +1,137 @@
 <!DOCTYPE html>
-<html>
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Glyph</title>
-    <meta charset="UTF-8">
+    <style>
+
+    h1 {
+        font-size: 50pt;
+        color: #4b0082;
+        text-align: center;
+        margin: 20px;
+    }
+
+    h2 {
+        color: #4b0082;
+        text-align: center;
+    }
+
+    p {
+        color: #4b0082;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 10px auto;
+        padding: 0 20px;
+    }
+
+    .code-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    pre {
+        background-color: #f4f4f4;
+        padding: 15px;
+        border-radius: 5px;
+        
+    }
+
+    .slideshow iframe {
+        width: 100%;
+        height: 500px;
+    }
+
+    .github-button {
+        display: block;
+        background-color: #24292f;
+        color: white;
+        text-decoration: none;
+        padding: 20px 30px;
+        border-radius: 6px;
+        margin: 10px auto;
+        width: fit-content;
+        text-align: center;
+    }
+
+    .github-button:hover {
+        background-color: #444c56;
+    }
+
+    </style>
 </head>
 <body>
-    <h1>Glyph</h1>
+
+    <header>
+        <h1>Glyph</h1>
+        <p>A sign-language-based programming language</p>
+    </header>
+
+    <div class="container">
+    <section>
+        <a href="https://github.com/magiccow444/Glyph" target="_blank" class="github-button">View on GitHub!</a>
+    </section>
+
+    <br>
+    <hr>
+
+    <section class="code-container">
+        <h2>Example Code</h2>
+        <pre><code>
+        # Printing in Glyph
+        🖨("Hello World)
+        🖨("This is my language, Glyph)
+
+        # Simple mathematical operations in Glyph
+        x=🖐
+        y=🤟
+        z=y^x
+        🖨(z)
+        z=y+x
+        🖨(z)
+        z=y%x
+        🖨(z)
+        z=y+x
+        🖨(z)
+
+        # Conditional statements in Glyph
+        x=1
+        y=x%2
+        ❓(y==0) {
+        🖨(x)
+        🖨("Even")
+        }
+        🔀 {{
+        🖨(x)
+        🖨("Odd")
+        }}
+        x=x+1
+
+        # Iteration in Glyph
+        x=☝
+        🌌(☝;☝✊) :
+        x=x+☝
+        🖨("x is:")
+        🖨(x)
+        :
+        </code></pre>
+    </section>
+
+    <hr>
+    <br>
+
+    <section class="slideshow">
+        <h2>Slideshow</h2>
+        <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vQuQI-PJ6wO2_Ul_LQGZx3KXe6pIy3UB48Fk2C5uu9F6Oio7gkYnmbTSXscNljo3NRT6IsZb1YOBRAS/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    </section>
+    </div>  
+
+    <hr>
+
 </body>
 </html>
